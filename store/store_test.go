@@ -209,3 +209,13 @@ func asJSON(v interface{}) string {
 	}
 	return string(b)
 }
+
+func newQuery(q string, tx, leader, verify, verbose bool) *Query {
+	return &Query{
+		Queries: []string{q},
+		Tx:      tx,
+		Leader:  leader,
+		Verify:  verify,
+		Verbose: verbose,
+	}
+}

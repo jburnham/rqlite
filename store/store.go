@@ -41,6 +41,14 @@ type command struct {
 	Queries []string `json:"queries,omitempty"`
 }
 
+type Query struct {
+	Queries []string
+	Tx      bool
+	Leader  bool
+	Verify  bool
+	Verbose bool
+}
+
 // Store is a SQLite database, where all changes are made via Raft consensus.
 type Store struct {
 	raftDir  string
@@ -275,23 +283,23 @@ func (s *Store) Backup(leader bool) ([]byte, error) {
 }
 
 // Query executes queries that return rows, and do not modify the database.
-func (s *Store) Query(queries []string, tx, leader, verify bool) ([]*sql.Rows, error) {
+func (s *Store) Query(q *Query) ([]*sql.Rows, error) {
 	// Allow concurrent queries.
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	if leader && s.raft.State() != raft.Leader {
+	if q.Leader && s.raft.State() != raft.Leader {
 		return nil, ErrNotLeader
 	}
 
-	if verify {
+	if q.Verify {
 		f := s.raft.VerifyLeader()
 		if e := f.(raft.Future); e.Error() != nil {
 			return nil, e.Error()
 		}
 	}
 
-	r, err := s.db.Query(queries, tx, true)
+	r, err := s.db.Query(q.Queries, q.Tx, q.Verbose)
 	return r, err
 }
 
