@@ -1,11 +1,61 @@
 #!/usr/bin/python
 
 import argparse
+import os
+import tempfile
 import requests
+import subprocess
+import logging
 import json
 import sys
 
 URL = 'https://api.github.com/repos/rqlite/rqlite/releases'
+
+def run(command, allow_failure=False, shell=False):
+    out = None
+    logging.debug("{}".format(command))
+    try:
+        if shell:
+            out = subprocess.check_output(command, stderr=subprocess.STDOUT, shell=shell)
+        else:
+            out = subprocess.check_output(command.split(), stderr=subprocess.STDOUT)
+        out = out.decode('utf-8').strip()
+    except subprocess.CalledProcessError as e:
+        if allow_failure:
+            logging.warn("Command '{}' failed with error: {}".format(command, e.output))
+            return None
+        else:
+            logging.error("Command '{}' failed with error: {}".format(command, e.output))
+            sys.exit(1)
+    except OSError as e:
+        if allow_failure:
+            logging.warn("Command '{}' failed with error: {}".format(command, e))
+            return out
+        else:
+            logging.error("Command '{}' failed with error: {}".format(command, e))
+            sys.exit(1)
+    else:
+        return out
+
+def get_current_commit(short=False):
+    command = None
+    if short:
+        command = "git log --pretty=format:'%h' -n 1"
+    else:
+        command = "git rev-parse HEAD"
+    out = run(command)
+    return out.strip('\'\n\r ')
+
+def get_current_branch():
+    command = "git rev-parse --abbrev-ref HEAD"
+    out = run(command)
+    return out.strip()
+
+def get_system_arch():
+    arch = os.uname()[4]
+    if arch == "x86_64":
+        arch = "amd64"
+    return arch
 
 class Parser(object):
     def __init__(self, text):
@@ -49,6 +99,10 @@ def main():
     if release_id == None:
         print 'unable to determine release ID for tag %s' % args.tag
         sys.exit(1)
+
+    print get_current_commit()
+    print get_current_branch()
+    print get_system_arch()
 
 if __name__ == '__main__':
     main()
