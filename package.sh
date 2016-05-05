@@ -36,8 +36,7 @@ export GOPATH=$tmp_build
 cd $tmp_build/src/github.com/rqlite
 git clone $REPO_URL
 cd rqlite
-go get -d ./...
-go install -ldflags="-X main.version=$VERSION -X main.branch=$branch -X main.commit=$commit -X main.buildtime=$buildtime" ./...
+GO15VENDOREXPERIMENT=1 go install -ldflags="-X main.version=$VERSION -X main.branch=$branch -X main.commit=$commit -X main.buildtime=$buildtime" ./...
 
 release=`echo rqlited-$VERSION-$kernel-$machine | tr '[:upper:]' '[:lower:]'`
 release_pkg=${release}.tar.gz
