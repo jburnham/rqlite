@@ -1,9 +1,12 @@
+machine:
+    environment:
+        GO15VENDOREXPERIMENT: 1
 dependencies:
     override:
-        - GO15VENDOREXPERIMENT=1 go build -v
+        - go build -v
 test:
     override:
         - bash gofmt.sh
-        - go tool vet .
-        - case $CIRCLE_NODE_INDEX in 0) GO15VENDOREXPERIMENT=1 go test -timeout 60s -v $(GO15VENDOREXPERIMENT=1 go list ./... | grep -v /vendor/) ;; 1) GORACE="halt_on_error=1" GO15VENDOREXPERIMENT=1 go test -race -timeout 120s -v $(GO15VENDOREXPERIMENT=1 go list ./... | grep -v /vendor/);; esac:
+        - go vet $(go list ./... | grep -v /vendor/)
+        - case $CIRCLE_NODE_INDEX in 0) go test -timeout 60s -v $(go list ./... | grep -v /vendor/) ;; 1) GORACE="halt_on_error=1" go test -race -timeout 120s -v $(go list ./... | grep -v /vendor/);; esac:
             parallel: true
